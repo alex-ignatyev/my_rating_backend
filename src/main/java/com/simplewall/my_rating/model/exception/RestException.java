@@ -1,4 +1,4 @@
-package com.simplewall.my_rating.exception;
+package com.simplewall.my_rating.model.exception;
 
 import org.springframework.http.HttpStatus;
 

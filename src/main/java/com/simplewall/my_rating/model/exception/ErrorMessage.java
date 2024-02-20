@@ -1,4 +1,4 @@
-package com.simplewall.my_rating.entity;
+package com.simplewall.my_rating.model.exception;
 
 public class ErrorMessage {
     private int statusCode;

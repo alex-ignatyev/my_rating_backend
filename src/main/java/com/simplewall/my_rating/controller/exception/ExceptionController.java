@@ -1,7 +1,7 @@
-package com.simplewall.my_rating.service;
+package com.simplewall.my_rating.controller.exception;
 
-import com.simplewall.my_rating.entity.ErrorMessage;
-import com.simplewall.my_rating.exception.RestException;
+import com.simplewall.my_rating.model.exception.ErrorMessage;
+import com.simplewall.my_rating.model.exception.RestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
