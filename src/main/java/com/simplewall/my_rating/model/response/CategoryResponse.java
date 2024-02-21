@@ -9,7 +9,9 @@ import java.util.List;
 @Getter
 @Setter
 public class CategoryResponse {
+
     private long id;
     private String name;
     private List<ProductResponse> products;
+
 }

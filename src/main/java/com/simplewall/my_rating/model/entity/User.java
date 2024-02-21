@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,22 +49,23 @@ public class User {
         this.phone = phone;
     }
 
-    public void addCategory(Category category) {
+    public Boolean addCategory(String name, int icon) {
+        Category category = new Category(name, icon);
         category.setUser(this);
-        categories.add(category);
+        return categories.add(category);
     }
 
-    public Boolean updateCategory(Long categoryId, String newName) {
+    public Boolean updateCategory(Long categoryId, String newName, int icon) {
         Category category = categories.stream()
                 .filter(c -> c.getId() == categoryId)
                 .findFirst()
                 .orElse(null);
-        if (category != null) {
-            category.setName(newName);
-            return true;
-        } else {
-            return false;
-        }
+
+        if (category == null) return false;
+
+        category.setName(newName);
+        category.setIcon(icon);
+        return true;
     }
 
     public boolean removeCategory(Long categoryId) {

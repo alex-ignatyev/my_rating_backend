@@ -1,72 +1,78 @@
 package com.simplewall.my_rating.service;
 
 import com.simplewall.my_rating.model.entity.Category;
-import com.simplewall.my_rating.model.entity.Product;
 import com.simplewall.my_rating.model.entity.User;
 import com.simplewall.my_rating.model.exception.RestException;
-import com.simplewall.my_rating.repository.UsersRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.simplewall.my_rating.model.request.product.AddProductRequest;
+import com.simplewall.my_rating.model.request.product.DeleteProductRequest;
+import com.simplewall.my_rating.model.request.product.UpdateProductRequest;
+import com.simplewall.my_rating.repository.UserRepository;
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class ProductService {
 
-    @Autowired
-    private UsersRepository usersRepository;
+    private final UserRepository userRepository;
 
-    public ResponseEntity<?> addProduct(String login, Long categoryId, Product product) {
-        User user = usersRepository.findByLogin(login)
+    @Transactional
+    public ResponseEntity<?> addProduct(String login, AddProductRequest request) {
+        User user = userRepository.findByLogin(login)
                 .orElseThrow(() -> new RestException("User not exist", HttpStatus.CONFLICT));
+
         Category category = user.getCategories().stream()
-                .filter(c -> c.getId() == categoryId)
+                .filter(c -> c.getId() == request.getCategoryId())
                 .findFirst()
-                .orElse(null);
-        if (category != null) {
-            category.addProduct(product);
-            usersRepository.save(user);
+                .orElseThrow(() -> new RestException("Category not found", HttpStatus.CONFLICT));
+
+        Boolean isProductAdded = category.addProduct(request.getName(), request.getRate());
+        if (isProductAdded) {
+            userRepository.save(user);
             return ResponseEntity.ok("Product added to category successfully");
         } else {
-            return ResponseEntity.badRequest().body("Category not found for user");
+            return ResponseEntity.badRequest().body("Can't add product");
         }
     }
 
-    public ResponseEntity<?> updateProductName(String login, Long categoryId, Long productId, String newName) {
-        User user = usersRepository.findByLogin(login)
+    @Transactional
+    public ResponseEntity<?> updateProduct(String login, UpdateProductRequest request) {
+        User user = userRepository.findByLogin(login)
                 .orElseThrow(() -> new RestException("User not exist", HttpStatus.CONFLICT));
 
         Category category = user.getCategories().stream()
-                .filter(c -> c.getId() == categoryId)
+                .filter(c -> c.getId() == request.getCategoryId())
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(() -> new RestException("Category not found", HttpStatus.CONFLICT));
 
-        if (category != null) {
-            Boolean updateProduct = category.updateProduct(productId, newName);
-            if (updateProduct) {
-                usersRepository.save(user);
-                return ResponseEntity.ok("Product name updated successfully");
-            } else {
-                return ResponseEntity.badRequest().body("Product not found in category");
-            }
+        Boolean updateProduct = category.updateProduct(request.getProductId(), request.getNewName());
+        if (updateProduct) {
+            userRepository.save(user);
+            return ResponseEntity.ok("Product name updated successfully");
         } else {
-            return ResponseEntity.badRequest().body("Category not found for user");
+            return ResponseEntity.badRequest().body("Product not found");
         }
     }
 
-    public ResponseEntity<?> deleteProductFromCategory(String login, Long categoryId, Long productId) {
-        User user = usersRepository.findByLogin(login)
+    @Transactional
+    public ResponseEntity<?> deleteProduct(String login, DeleteProductRequest request) {
+        User user = userRepository.findByLogin(login)
                 .orElseThrow(() -> new RestException("User not exist", HttpStatus.CONFLICT));
+
         Category category = user.getCategories().stream()
-                .filter(c -> c.getId() == categoryId)
+                .filter(c -> c.getId() == request.getCategoryId())
                 .findFirst()
-                .orElse(null);
-        if (category != null) {
-            category.removeProduct(productId);
-            usersRepository.save(user);
+                .orElseThrow(() -> new RestException("Category not found", HttpStatus.CONFLICT));
+
+        Boolean isProductDeleted = category.removeProduct(request.getProductId());
+        if (isProductDeleted) {
+            userRepository.save(user);
             return ResponseEntity.ok("Product deleted from category successfully");
         } else {
-            return ResponseEntity.badRequest().body("Category not found for user");
+            return ResponseEntity.badRequest().body("Product not found");
         }
     }
 }

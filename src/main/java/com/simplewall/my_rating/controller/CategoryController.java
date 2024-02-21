@@ -1,42 +1,41 @@
 package com.simplewall.my_rating.controller;
 
-import com.simplewall.my_rating.model.entity.Category;
+import com.simplewall.my_rating.model.request.category.AddCategoryRequest;
+import com.simplewall.my_rating.model.request.category.DeleteCategoryRequest;
+import com.simplewall.my_rating.model.request.category.UpdateCategoryRequest;
 import com.simplewall.my_rating.service.CategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
+@AllArgsConstructor
 @RequestMapping("/categories")
 public class CategoryController {
 
-    @Autowired
-    private CategoryService categoryService;
+    private final CategoryService categoryService;
 
     @PostMapping("/add")
     public ResponseEntity<?> addCategory(
             @RequestParam String login,
-            @RequestBody Category category
+            @RequestBody AddCategoryRequest addCategoryRequest
     ) {
-        return categoryService.addCategory(login, category);
+        return categoryService.addCategory(login, addCategoryRequest);
     }
 
     @PutMapping("/update")
     public ResponseEntity<?> updateCategory(
             @RequestParam String login,
-            @RequestParam Long categoryId,
-            @RequestParam String newName
+            @RequestBody UpdateCategoryRequest updateCategoryRequest
     ) {
-        return categoryService.updateCategory(login, categoryId, newName);
+        return categoryService.updateCategory(login, updateCategoryRequest);
     }
 
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteCategory(
             @RequestParam String login,
-            @RequestParam Long categoryId
+            @RequestBody DeleteCategoryRequest deleteCategoryRequest
     ) {
-        return categoryService.deleteCategory(login, categoryId);
+        return categoryService.deleteCategory(login, deleteCategoryRequest);
     }
 }

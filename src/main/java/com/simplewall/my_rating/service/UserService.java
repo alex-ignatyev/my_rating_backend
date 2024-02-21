@@ -10,10 +10,11 @@ import com.simplewall.my_rating.model.request.user.RegisterRequest;
 import com.simplewall.my_rating.model.response.CategoryResponse;
 import com.simplewall.my_rating.model.response.ProductResponse;
 import com.simplewall.my_rating.model.response.UserResponse;
-import com.simplewall.my_rating.repository.CategoriesRepository;
+import com.simplewall.my_rating.repository.CategoryRepository;
 import com.simplewall.my_rating.repository.ProductRepository;
-import com.simplewall.my_rating.repository.UsersRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.simplewall.my_rating.repository.UserRepository;
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -24,22 +25,19 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 public class UserService {
 
-    @Autowired
-    private UsersRepository usersRepository;
+    private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
+    private final ProductRepository productsRepository;
 
-    @Autowired
-    private CategoriesRepository categoriesRepository;
-
-    @Autowired
-    private ProductRepository productsRepository;
-
+    @Transactional
     public ResponseEntity<UserResponse> getUserInfo(String login) {
-        User user = usersRepository.findByLogin(login)
+        User user = userRepository.findByLogin(login)
                 .orElseThrow(() -> new RestException("User not exist", HttpStatus.CONFLICT));
 
-        List<CategoryResponse> categories = categoriesRepository.findByUserLogin(user.getLogin())
+        List<CategoryResponse> categories = categoryRepository.findByUserLogin(user.getLogin())
                 .stream()
                 .map(category -> {
                     List<Product> products = productsRepository.findProductsByCategoryId(category.getId());
@@ -50,7 +48,10 @@ public class UserService {
         return ResponseEntity.ok(new UserResponse(user.getId(), user.getLogin(), user.getEmail(), user.getPhone(), categories));
     }
 
-    public ResponseEntity<User> login(LoginRequest loginRequest) {
+    @Transactional
+    public ResponseEntity<?> login(LoginRequest loginRequest) {
+        User user = userRepository.findByLogin(loginRequest.getLogin())
+                .orElseThrow(() -> new RestException("User not exist", HttpStatus.CONFLICT));
 
         // Проверка длинны логина < 4
         if (loginRequest.getLogin().length() < 4) {
@@ -72,33 +73,30 @@ public class UserService {
             throw new RestException("Password length should be at less 16 characters", HttpStatus.BAD_REQUEST);
         }
 
-        User user = usersRepository.findByLogin(loginRequest.getLogin())
-                .orElseThrow(() -> new RestException("User not exist", HttpStatus.CONFLICT));
-
         // Проверка совпадения паролей
-        if (Objects.equals(user.getPassword(), loginRequest.getPassword())) {
-            return ResponseEntity.ok(user);
-        } else {
+        if (!Objects.equals(user.getPassword(), loginRequest.getPassword())) {
             throw new RestException("Incorrect password", HttpStatus.CONFLICT);
         }
+
+        return ResponseEntity.ok("Success login");
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<User> register(RegisterRequest register) {
+    @Transactional
+    public ResponseEntity<?> register(RegisterRequest register) {
 
         // Проверка уникальности логина
-        usersRepository.findByLogin(register.getLogin()).ifPresent(u -> {
-            throw new RestException("User not exist", HttpStatus.CONFLICT);
+        userRepository.findByLogin(register.getLogin()).ifPresent(u -> {
+            throw new RestException("Login is already used", HttpStatus.CONFLICT);
         });
 
         // Проверка уникальности почты
-        usersRepository.findByEmail(register.getEmail()).ifPresent(u -> {
-            throw new RestException("Email is already in use", HttpStatus.CONFLICT);
+        userRepository.findByEmail(register.getEmail()).ifPresent(u -> {
+            throw new RestException("Email is already in used", HttpStatus.CONFLICT);
         });
 
         // Проверка уникальности телефона
-        usersRepository.findByPhone(register.getPhone()).ifPresent(u -> {
-            throw new RestException("Phone number is already in used", HttpStatus.CONFLICT);
+        userRepository.findByPhone(register.getPhone()).ifPresent(u -> {
+            throw new RestException("Phone is already in used", HttpStatus.CONFLICT);
         });
 
         // Проверка формата почты и длинна <= 20
@@ -117,13 +115,13 @@ public class UserService {
         }
 
         // Создание нового пользователя и сохранение в базе данных
-        User newUser = usersRepository.save(new User(register.getLogin(), register.getPassword(), register.getEmail(), register.getPhone()));
+        User newUser = userRepository.save(new User(register.getLogin(), register.getPassword(), register.getEmail(), register.getPhone()));
         return ResponseEntity.ok(newUser);
     }
 
     @PostMapping("/forgot")
     public ResponseEntity<User> forgot(ForgotRequest forgot) {
-        User user = usersRepository.findByEmail(forgot.getEmail())
+        User user = userRepository.findByEmail(forgot.getEmail())
                 .orElseThrow(() -> new RestException("Can't fin user", HttpStatus.CONFLICT));
 
         // Проверка длинны пароля < 4
@@ -140,7 +138,9 @@ public class UserService {
             throw new RestException("Passwords should be the same", HttpStatus.CONFLICT);
         }
 
-        usersRepository.save(new User(user.getLogin(), forgot.getPassword(), user.getEmail(), user.getPhone()));
+        user.setPassword(forgot.getPassword());
+
+        userRepository.save(user);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 

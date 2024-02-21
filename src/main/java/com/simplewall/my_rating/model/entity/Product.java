@@ -21,6 +21,11 @@ public class Product {
     @Column(name = "rate")
     private int rate;
 
+    public Product(String name, int rate) {
+        this.name = name;
+        this.rate = rate;
+    }
+
     @ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
     private Category category;
 }

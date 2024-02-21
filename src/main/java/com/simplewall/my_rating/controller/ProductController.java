@@ -1,43 +1,41 @@
 package com.simplewall.my_rating.controller;
 
-import com.simplewall.my_rating.model.entity.Product;
+import com.simplewall.my_rating.model.request.product.AddProductRequest;
+import com.simplewall.my_rating.model.request.product.DeleteProductRequest;
+import com.simplewall.my_rating.model.request.product.UpdateProductRequest;
 import com.simplewall.my_rating.service.ProductService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@AllArgsConstructor
 @RequestMapping("/products")
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
 
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(
             @RequestParam String login,
-            @RequestParam Long categoryId,
-            @RequestBody Product product
+            @RequestBody AddProductRequest addProductRequest
     ) {
-        return productService.addProduct(login, categoryId, product);
+        return productService.addProduct(login, addProductRequest);
     }
 
     @PutMapping("/update")
-    public ResponseEntity<?> updateProductName(
+    public ResponseEntity<?> updateProduct(
             @RequestParam String login,
-            @RequestParam Long categoryId,
-            @RequestParam Long productId,
-            @RequestParam String newName
+            @RequestBody UpdateProductRequest updateProductRequest
     ) {
-        return productService.updateProductName(login, categoryId, productId, newName);
+        return productService.updateProduct(login, updateProductRequest);
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteProductFromCategory(
+    public ResponseEntity<?> deleteProduct(
             @RequestParam String login,
-            @RequestParam Long categoryId,
-            @RequestParam Long productId
+            @RequestBody DeleteProductRequest deleteProductRequest
     ) {
-        return productService.deleteProductFromCategory(login, categoryId, productId);
+        return productService.deleteProduct(login, deleteProductRequest);
     }
 }

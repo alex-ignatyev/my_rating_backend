@@ -27,6 +27,14 @@ public class Category {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "icon")
+    private int icon;
+
+    public Category(String name, int icon) {
+        this.name = name;
+        this.icon = icon;
+    }
+
     @ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
     @JsonIgnore
     private User user;
@@ -35,9 +43,10 @@ public class Category {
     @JsonIgnore
     private List<Product> products = new ArrayList<>();
 
-    public void addProduct(Product product) {
+    public Boolean addProduct(String name, int rate) {
+        Product product = new Product(name, rate);
         product.setCategory(this);
-        products.add(product);
+       return products.add(product);
     }
 
     public Boolean updateProduct(Long productId, String newName) {
@@ -45,6 +54,7 @@ public class Category {
                 .filter(c -> c.getId() == productId)
                 .findFirst()
                 .orElse(null);
+
         if (product != null) {
             product.setName(newName);
             return true;
@@ -53,7 +63,7 @@ public class Category {
         }
     }
 
-    public void removeProduct(Long productId) {
-        products.removeIf(c -> c.getId() == productId);
+    public Boolean removeProduct(Long productId) {
+       return products.removeIf(c -> c.getId() == productId);
     }
 }
